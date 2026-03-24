@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>WSI | Landed Cost Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --brand: #0f172a;
+  --brand-light: #1e293b;
+  --accent: #0047AB;
+  --accent-soft: #e8f0fe;
+  --accent-hover: #003580;
+  --accent-glow: rgba(0,71,171,.20);
+  --cyan: #0093E0;
+  --cyan-soft: #e0f4ff;
+  --green: #22c55e;
+  --green-soft: #dcfce7;
+  --green-dark: #15803d;
+  --amber: #f59e0b;
+  --amber-soft: #fef9c3;
+  --amber-dark: #92400e;
+  --red: #ef4444;
+  --red-soft: #fee2e2;
+  --red-dark: #991b1b;
+  --sky: #0093E0;
+  --sky-soft: #e0f4ff;
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
+  --shadow-glow: 0 0 0 3px var(--accent-glow);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --nav-height: 60px;
+  --bottom-nav-height: 68px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Reset & Base ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 16px);
+}
+
+/* ── Top Navigation ────────────────────────────────────────────────────────── */
+.topnav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--nav-height);
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+}
+.topnav-left { display: flex; align-items: center; gap: 12px; }
+.topnav-brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; cursor: pointer;
+}
+.icon-btn {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-size: 18px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* ── Side Drawer ──────────────────────────────────────────────────────────── */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.45);
+  z-index: 250;
+  transition: opacity 0.25s;
+}
+.drawer-overlay.hidden { display: none; }
+.side-drawer {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: 280px;
+  background: var(--brand);
+  z-index: 260;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column;
+}
+.side-drawer.open { transform: translateX(0); }
+.drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.drawer-header .icon-btn { color: rgba(255,255,255,0.4); }
+.drawer-brand { display: flex; align-items: center; gap: 10px; }
+.drawer-brand-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, #0047AB, #0093E0);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 16px;
+}
+.drawer-brand-name { font-size: 18px; font-weight: 800; color: white; display: block; line-height: 1.1; }
+.drawer-brand-sub { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.2px; display: block; }
+.drawer-nav { list-style: none; padding: 12px 8px; flex: 1; }
+.drawer-nav li {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: rgba(255,255,255,0.4);
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.15s;
+  min-height: 48px;
+}
+.drawer-nav li:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+.drawer-nav li.active { background: rgba(0,71,171,0.15); color: var(--accent); }
+.drawer-nav li .material-icons-round { font-size: 20px; width: 22px; text-align: center; }
+.topnav-logo {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, #0047AB, #0093E0);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 14px; color: #fff; letter-spacing: -0.5px;
+}
+.topnav-title { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.1; }
+.topnav-subtitle { color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.2px; }
+.topnav-right { display: flex; align-items: center; gap: 12px; }
+.user-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.08);
+  padding: 6px 14px 6px 6px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background 0.15s;
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+  font-weight: 500;
+}
+.user-pill:hover { background: rgba(255,255,255,0.14); }
+.user-pill .material-icons-round.chevron { font-size: 16px; opacity: 0.6; }
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #0047AB, #0093E0);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+
+/* ── User Dropdown ────────────────────────────────────────────────────────── */
+.dropdown {
+  position: fixed;
+  top: calc(var(--nav-height) + 4px);
+  right: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 300;
+  min-width: 260px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  animation: slideDown 0.2s ease;
+}
+.dropdown.hidden { display: none; }
+.dropdown-label { padding: 12px 16px 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-tertiary); }
+.dropdown-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; cursor: pointer;
+  transition: background 0.12s; font-size: 14px;
+}
+.dropdown-item:hover { background: #f8fafc; }
+.dropdown-item strong { display: block; }
+.avatar-sm {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--border); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.role-tag {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 2px 7px; border-radius: 9999px; margin-left: 4px;
+}
+.role-tag.planner { background: var(--accent-soft); color: var(--accent); }
+.role-tag.finance { background: var(--amber-soft); color: var(--amber-dark); }
+.role-tag.ops { background: var(--green-soft); color: var(--green-dark); }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+/* ── Bottom Tab Bar (tablet-first) ─────────────────────────────────────────── */
+.bottomnav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  height: var(--bottom-nav-height);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+}
+.bottomnav a {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  text-decoration: none; color: var(--text-tertiary);
+  font-size: 11px; font-weight: 600;
+  transition: color var(--transition);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  min-width: 64px; min-height: 48px;
+  justify-content: center;
+  -webkit-user-select: none; user-select: none;
+}
+.bottomnav a .material-icons-round { font-size: 20px; transition: transform var(--transition); }
+.bottomnav a.active { color: var(--accent); }
+.bottomnav a.active .material-icons-round { transform: scale(1.1); }
+.bottomnav a:active { transform: scale(0.95); }
+@media (hover: hover) {
+  .bottomnav a:hover { color: var(--accent); }
+}
+@media (min-width: 1200px) {
+  .bottomnav { display: none; }
+  body { padding-bottom: 32px; }
+}
+
+/* ── Page Container ────────────────────────────────────────────────────────── */
+.page-container {
+  padding-top: calc(var(--nav-height) + 16px);
+  padding-bottom: calc(var(--bottom-nav-height) + 16px);
+  padding-left: 16px;
+  padding-right: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Section Visibility ────────────────────────────────────────────────────── */
+.section { display: none; animation: fadeUp 0.3s ease; }
+.section.active { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Page Headers ──────────────────────────────────────────────────────────── */
+.page-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+}
+.page-title {
+  font-size: 26px; font-weight: 800; letter-spacing: -0.3px; color: var(--text); line-height: 1.2;
+}
+.page-subtitle {
+  font-size: 14px; color: var(--text-secondary); margin-top: 2px; font-weight: 500;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface-raised);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: transform .15s var(--transition), box-shadow .15s var(--transition);
+}
+.card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .material-icons-round { font-size: 18px; color: var(--accent); }
+
+/* ── KPI / Stat Tiles ──────────────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px; margin-bottom: 20px;
+}
+.kpi {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+}
+.kpi::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--border-light); border-radius: 3px 3px 0 0;
+}
+.kpi.kpi-accent::before { background: var(--accent); }
+.kpi.kpi-green::before { background: var(--green); }
+.kpi.kpi-amber::before { background: var(--amber); }
+.kpi.kpi-sky::before { background: var(--sky); }
+.kpi-label {
+  font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;
+}
+.kpi-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+.kpi.kpi-accent .kpi-value { color: var(--accent); }
+.kpi.kpi-green .kpi-value { color: var(--green-dark); }
+.kpi.kpi-amber .kpi-value { color: var(--amber-dark); }
+.kpi.kpi-sky .kpi-value { color: #0369a1; }
+.kpi-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; font-weight: 500; }
+
+/* ── Tables ────────────────────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -20px; padding: 0 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  text-align: left; font-weight: 700; color: var(--text-tertiary);
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px;
+  padding: 10px 12px; border-bottom: 2px solid var(--border);
+  white-space: nowrap; position: sticky; top: 0; background: var(--surface-raised);
+}
+tbody td {
+  padding: 12px; border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+tbody tr { transition: background var(--transition); }
+tbody tr:active { background: var(--accent-soft); }
+@media (hover: hover) { tbody tr:hover { background: #f8fafc; } }
+.table-empty { text-align: center; padding: 32px 16px; color: var(--text-tertiary); font-size: 14px; }
+
+/* ── Badges ────────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+.badge-ready { background: var(--accent-soft); color: var(--accent); }
+.badge-enriched { background: #ede9fe; color: #6d28d9; }
+.badge-evaluated { background: var(--amber-soft); color: var(--amber-dark); }
+.badge-approved { background: var(--green-soft); color: var(--green-dark); }
+.badge-overridden { background: #fce7f3; color: #9d174d; }
+.badge-shipped { background: var(--sky-soft); color: #0369a1; }
+.badge-closed { background: #f1f5f9; color: #475569; }
+.badge-green { background: var(--green-soft); color: var(--green-dark); }
+.badge-amber { background: var(--amber-soft); color: var(--amber-dark); }
+.badge-red { background: var(--red-soft); color: var(--red-dark); }
+.badge-open { background: var(--accent-soft); color: var(--accent); }
+.badge-resolved { background: var(--green-soft); color: var(--green-dark); }
+.badge-backlog { background: #f1f5f9; color: #475569; }
+.badge-pending { background: var(--amber-soft); color: var(--amber-dark); }
+.badge-validated { background: var(--green-soft); color: var(--green-dark); }
+.badge-disputed { background: var(--red-soft); color: var(--red-dark); }
+.badge-standard { background: #f1f5f9; color: #475569; }
+.badge-finance_review { background: var(--amber-soft); color: var(--amber-dark); }
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer; transition: all var(--transition);
+  -webkit-user-select: none; user-select: none;
+  min-height: 44px; /* touch target */
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 2px 8px var(--accent-glow); }
+.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 12px var(--accent-glow); }
+.btn-success { background: var(--green); color: #fff; box-shadow: 0 2px 8px rgba(34,197,94,0.3); }
+.btn-success:hover { background: #16a34a; }
+.btn-warning { background: var(--amber); color: #fff; box-shadow: 0 2px 8px rgba(245,158,11,0.3); }
+.btn-warning:hover { background: #d97706; }
+.btn-outline {
+  background: transparent; color: var(--text-secondary); border: 1.5px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost { background: transparent; color: var(--accent); padding: 10px 12px; }
+.btn-sm { padding: 8px 14px; font-size: 13px; min-height: 38px; border-radius: var(--radius-xs); }
+.btn-block { width: 100%; }
+.btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+.btn-icon .material-icons-round { font-size: 20px; }
+
+/* ── Recommendation Cards ──────────────────────────────────────────────────── */
+.rec-card {
+  background: var(--surface-raised);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0; margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden; transition: all var(--transition);
+}
+.rec-card:active { box-shadow: var(--shadow-glow); }
+.rec-card.rank-1 { border-color: var(--green); }
+.rec-card.rank-1 .rec-top { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+.rec-top {
+  padding: 16px 18px; display: flex; justify-content: space-between; align-items: flex-start;
+  background: var(--bg); border-bottom: 1px solid var(--border-light);
+}
+.rec-top-left { display: flex; flex-direction: column; gap: 4px; }
+.rec-badge-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rec-rank-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: var(--accent);
+}
+.rank-1 .rec-rank-badge { background: var(--green-dark); }
+.rec-source-name { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 2px; }
+.rec-lane { font-size: 12px; color: var(--text-secondary); }
+.rec-top-right { text-align: right; }
+.rec-cost-big { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+.rec-delta { font-size: 13px; font-weight: 700; margin-top: 2px; }
+.rec-delta.savings { color: var(--green-dark); }
+.rec-delta.extra { color: var(--red); }
+.rec-body { padding: 16px 18px; }
+.rec-meta-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  font-size: 12px; margin-bottom: 14px;
+}
+.rec-meta-item { display: flex; flex-direction: column; gap: 1px; }
+.rec-meta-label { color: var(--text-tertiary); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.rec-meta-value { color: var(--text); font-weight: 600; }
+.rec-cost-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 14px;
+}
+.rec-cost-chip {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 10px; background: var(--bg); border-radius: var(--radius-xs);
+  font-size: 11px;
+}
+.rec-cost-chip span:first-child { color: var(--text-tertiary); font-weight: 500; }
+.rec-cost-chip span:last-child { color: var(--text); font-weight: 700; }
+.rec-rationale {
+  padding: 10px 14px; background: var(--accent-soft); border-radius: var(--radius-xs);
+  font-size: 12px; color: var(--accent); font-weight: 500; line-height: 1.5;
+  border-left: 3px solid var(--accent);
+}
+.rank-1 .rec-rationale { background: var(--green-soft); color: var(--green-dark); border-left-color: var(--green); }
+.rec-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+/* ── Workflow Stepper ──────────────────────────────────────────────────────── */
+.stepper { display: flex; gap: 0; margin-bottom: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.stepper-step {
+  flex: 1; min-width: 80px; text-align: center; padding: 12px 4px 10px;
+  position: relative; background: var(--surface-raised);
+  border-bottom: 3px solid var(--border);
+  transition: all var(--transition);
+}
+.stepper-step.done { border-bottom-color: var(--green); background: var(--green-soft); }
+.stepper-step.current { border-bottom-color: var(--accent); background: var(--accent-soft); }
+.stepper-num {
+  width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; margin-bottom: 4px;
+  background: var(--border); color: var(--text-tertiary);
+}
+.stepper-step.done .stepper-num { background: var(--green); color: #fff; }
+.stepper-step.current .stepper-num { background: var(--accent); color: #fff; }
+.stepper-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); display: block; }
+.stepper-step.done .stepper-label { color: var(--green-dark); }
+.stepper-step.current .stepper-label { color: var(--accent); }
+
+/* ── Detail Info Grid ──────────────────────────────────────────────────────── */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.info-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; }
+.info-label { font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; }
+.info-value { font-size: 14px; font-weight: 600; color: var(--text); }
+
+/* ── Rule Chips ────────────────────────────────────────────────────────────── */
+.rule-chip {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; background: var(--bg); border-radius: var(--radius-sm);
+  margin-bottom: 8px; font-size: 13px;
+}
+.rule-chip-label { font-weight: 600; color: var(--text); }
+.rule-chip-value { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ── Pill Tabs ─────────────────────────────────────────────────────────────── */
+.pill-tabs {
+  display: flex; gap: 6px; padding: 4px; background: var(--bg); border-radius: 10px;
+  margin-bottom: 16px; overflow-x: auto;
+}
+.pill-tab {
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); background: transparent; border: none;
+  cursor: pointer; white-space: nowrap; transition: all var(--transition);
+  min-height: 38px;
+}
+.pill-tab.active { background: var(--surface-raised); color: var(--accent); box-shadow: var(--shadow-sm); }
+
+/* ── Scenario Panel ────────────────────────────────────────────────────────── */
+.scenario-row {
+  display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 14px;
+}
+.scenario-field { flex: 1; min-width: 100px; }
+.scenario-field label {
+  display: block; font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.scenario-field input {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600; font-family: inherit; background: var(--bg);
+  transition: border-color var(--transition); min-height: 44px;
+}
+.scenario-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+/* ── Modal ─────────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(15,23,42,0.5); backdrop-filter: blur(4px);
+  align-items: flex-end; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 20px 20px 0 0; padding: 24px;
+  width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  padding-bottom: calc(24px + var(--safe-bottom));
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-handle {
+  width: 36px; height: 4px; border-radius: 2px; background: var(--border);
+  margin: 0 auto 16px;
+}
+.modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.modal label {
+  display: block; font-size: 11px; font-weight: 700; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.5px; margin: 14px 0 6px;
+}
+.modal input, .modal select, .modal textarea {
+  width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 15px; font-family: inherit; background: var(--bg);
+  min-height: 48px; transition: border-color var(--transition);
+}
+.modal input:focus, .modal select:focus, .modal textarea:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.modal textarea { min-height: 80px; resize: vertical; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.modal-actions .btn { flex: 1; }
+
+/* ── Infeasible Sources ────────────────────────────────────────────────────── */
+.infeasible-card {
+  padding: 12px 16px; background: var(--red-soft); border-radius: var(--radius-sm);
+  margin-bottom: 8px; border-left: 3px solid var(--red);
+}
+.infeasible-name { font-size: 13px; font-weight: 700; color: var(--red-dark); }
+.infeasible-reason { font-size: 12px; color: var(--red-dark); opacity: 0.8; margin-top: 2px; }
+
+/* ── Decision Record Card ──────────────────────────────────────────────────── */
+.decision-card {
+  background: var(--surface-raised); border-radius: var(--radius);
+  border: 1.5px solid var(--border); padding: 18px;
+  margin-top: 16px; position: relative; overflow: hidden;
+}
+.decision-card::before {
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+}
+.decision-card.approved::before { background: var(--green); }
+.decision-card.overridden::before { background: var(--amber); }
+
+/* ── Empty State ───────────────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 48px 24px;
+}
+.empty-state .material-icons-round { font-size: 48px; color: var(--border); margin-bottom: 12px; }
+.empty-state p { color: var(--text-tertiary); font-size: 14px; margin-bottom: 16px; }
+
+/* ── Order Card (mobile-first list item) ───────────────────────────────────── */
+.order-card {
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+  box-shadow: var(--shadow-sm); cursor: pointer;
+  transition: all var(--transition); display: flex; justify-content: space-between; align-items: center;
+}
+.order-card:active { box-shadow: var(--shadow-glow); transform: scale(0.99); }
+.order-card-left { flex: 1; }
+.order-card-id { font-size: 15px; font-weight: 700; color: var(--text); }
+.order-card-customer { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+.order-card-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+.order-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+/* ── Savings row cards ─────────────────────────────────────────────────────── */
+.savings-card {
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+}
+.savings-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.savings-card-id { font-weight: 700; font-size: 14px; }
+.savings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.savings-item { }
+.savings-item-label { font-size: 10px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; }
+.savings-item-value { font-size: 15px; font-weight: 700; }
+.savings-item-value.positive { color: var(--green-dark); }
+
+/* ── Tablet+ layout (landscape / large tablets) ────────────────────────────── */
+@media (min-width: 768px) {
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+  .page-container { padding-left: 24px; padding-right: 24px; }
+  .rec-cost-grid { grid-template-columns: repeat(3, 1fr); }
+  .rec-meta-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .modal { border-radius: 20px; align-self: center; }
+  .modal-overlay { align-items: center; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+}
+
+@media (min-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ── Utility ───────────────────────────────────────────────────────────────── */
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.text-green { color: var(--green-dark) !important; }
+.text-red { color: var(--red) !important; }
+.text-muted { color: var(--text-tertiary); }
+.text-sm { font-size: 12px; }
+.text-xs { font-size: 11px; }
+.fw-700 { font-weight: 700; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.gap-8 { gap: 8px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ── Top Nav ──────────────────────────────────────────────────────────────── -->
+<header class="topnav">
+  <div class="topnav-left">
+    <button class="icon-btn" id="menu-toggle" aria-label="Menu">
+      <span class="material-icons-round">menu</span>
+    </button>
+    <a class="topnav-brand" href="#" onclick="event.preventDefault(); switchSection('dashboard')">
+      <div class="topnav-logo"><span class="material-icons-round" style="font-size:20px">water_drop</span></div>
+      <div>
+        <div class="topnav-title">WSI</div>
+        <div class="topnav-subtitle">Landed Cost Optimizer</div>
+      </div>
+    </a>
+  </div>
+  <div class="topnav-right">
+    <div class="user-pill" id="user-pill">
+      <div class="avatar" id="user-avatar">JC</div>
+      <span id="current-user-name">James Carter</span>
+      <span class="material-icons-round chevron">expand_more</span>
+    </div>
+  </div>
+</header>
+
+<!-- User dropdown -->
+<div id="user-dropdown" class="dropdown hidden">
+  <div class="dropdown-label">Switch Demo Role</div>
+  <div class="dropdown-item" data-uid="USR-001"><div class="avatar-sm">JC</div><div><strong>James Carter</strong><span class="role-tag planner">Planner</span></div></div>
+  <div class="dropdown-item" data-uid="USR-002"><div class="avatar-sm">MS</div><div><strong>Maria Santos</strong><span class="role-tag planner">Planner</span></div></div>
+  <div class="dropdown-item" data-uid="USR-003"><div class="avatar-sm">RK</div><div><strong>Robert Kim</strong><span class="role-tag finance">Finance</span></div></div>
+  <div class="dropdown-item" data-uid="USR-004"><div class="avatar-sm">PA</div><div><strong>Patricia Allen</strong><span class="role-tag ops">Ops Manager</span></div></div>
+</div>
+
+<!-- ── Side Drawer ────────────────────────────────────────────────────────── -->
+<div id="drawer-overlay" class="drawer-overlay hidden"></div>
+<nav id="side-drawer" class="side-drawer">
+  <div class="drawer-header">
+    <div class="drawer-brand">
+      <div class="drawer-brand-icon"><span class="material-icons-round" style="font-size:20px">water_drop</span></div>
+      <div>
+        <span class="drawer-brand-name">WSI</span>
+        <span class="drawer-brand-sub">Landed Cost Optimizer</span>
+      </div>
+    </div>
+    <button class="icon-btn" id="drawer-close"><span class="material-icons-round">close</span></button>
+  </div>
+  <ul class="drawer-nav">
+    <li class="active" data-section="dashboard"><span class="material-icons-round">space_dashboard</span><span>Dashboard</span></li>
+    <li data-section="orders"><span class="material-icons-round">list_alt</span><span>Orders</span></li>
+    <li data-section="order-detail"><span class="material-icons-round">recommend</span><span>Recommend</span></li>
+    <li data-section="decisions"><span class="material-icons-round">task_alt</span><span>Decisions</span></li>
+    <li data-section="savings"><span class="material-icons-round">savings</span><span>Savings</span></li>
+    <li data-section="more"><span class="material-icons-round">more_horiz</span><span>More</span></li>
+  </ul>
+</nav>
+
+<!-- ── Bottom Tab Nav ──────────────────────────────────────────────────────── -->
+<nav class="bottomnav">
+  <a href="#" class="active" data-section="dashboard">
+    <span class="material-icons-round">space_dashboard</span>Dashboard
+  </a>
+  <a href="#" data-section="orders">
+    <span class="material-icons-round">list_alt</span>Orders
+  </a>
+  <a href="#" data-section="order-detail">
+    <span class="material-icons-round">recommend</span>Recommend
+  </a>
+  <a href="#" data-section="decisions">
+    <span class="material-icons-round">task_alt</span>Decisions
+  </a>
+  <a href="#" data-section="savings">
+    <span class="material-icons-round">savings</span>Savings
+  </a>
+  <a href="#" data-section="more">
+    <span class="material-icons-round">more_horiz</span>More
+  </a>
+</nav>
+
+<!-- ── Page Container ──────────────────────────────────────────────────────── -->
+<div class="page-container">
+
+  <!-- ═══════ DASHBOARD ═══════ -->
+  <div id="dashboard" class="section active">
+    <div class="page-top">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Pilot performance at a glance</p>
+      </div>
+    </div>
+    <div class="kpi-grid" id="dash-stats"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><span class="material-icons-round">analytics</span> Pilot Metrics</span>
+        </div>
+        <div class="table-wrap">
+          <table id="dash-metrics-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><span class="material-icons-round">flag</span> Open Issues</span>
+        </div>
+        <div class="table-wrap">
+          <table id="dash-issues-table">
+            <thead><tr><th>Issue</th><th>Owner</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ ORDERS ═══════ -->
+  <div id="orders" class="section">
+    <div class="page-top">
+      <div>
+        <h1 class="page-title">Order Queue</h1>
+        <p class="page-subtitle">All orders awaiting evaluation</p>
+      </div>
+    </div>
+    <div id="order-list"></div>
+  </div>
+
+  <!-- ═══════ ORDER DETAIL ═══════ -->
+  <div id="order-detail" class="section">
+    <div id="order-detail-content">
+      <div class="empty-state">
+        <span class="material-icons-round">touch_app</span>
+        <p>Select an order from the Orders tab to view details and recommendations.</p>
+        <button class="btn btn-primary" onclick="switchSection('orders')">Go to Orders</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ DECISIONS ═══════ -->
+  <div id="decisions" class="section">
+    <div class="page-top">
+      <div>
+        <h1 class="page-title">Decision Log</h1>
+        <p class="page-subtitle">Audit trail of all approvals and overrides</p>
+      </div>
+    </div>
+    <div id="decision-list"></div>
+  </div>
+
+  <!-- ═══════ SAVINGS ═══════ -->
+  <div id="savings" class="section">
+    <div class="page-top">
+      <div>
+        <h1 class="page-title">Savings Ledger</h1>
+        <p class="page-subtitle">Theoretical vs realized savings by order</p>
+      </div>
+    </div>
+    <div id="savings-list"></div>
+  </div>
+
+  <!-- ═══════ MORE (sub-sections) ═══════ -->
+  <div id="more" class="section">
+    <div class="page-top">
+      <div>
+        <h1 class="page-title">More</h1>
+        <p class="page-subtitle">Reference data and configuration</p>
+      </div>
+    </div>
+    <div class="pill-tabs" id="more-tabs">
+      <button class="pill-tab active" data-more="constraints">Constraints</button>
+      <button class="pill-tab" data-more="sources">Sources</button>
+      <button class="pill-tab" data-more="rates">Lane Rates</button>
+      <button class="pill-tab" data-more="fx">FX Rates</button>
+      <button class="pill-tab" data-more="issues">Issues</button>
+    </div>
+    <div id="more-content"></div>
+  </div>
+
+</div>
+
+<!-- ── Approval Modal ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="approve-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modal-title">Approve Recommendation</h3>
+    <label>Approver Name</label>
+    <input id="modal-approver" value="James Carter">
+    <label>Role</label>
+    <select id="modal-role">
+      <option>Ops / Logistics Planner</option>
+      <option>Finance Reviewer</option>
+      <option>Business Owner</option>
+    </select>
+    <label>Reason Code</label>
+    <select id="modal-reason">
+      <option value="cost_optimized">Cost Optimized</option>
+      <option value="service_preferred">Service Level Preferred</option>
+      <option value="capacity_driven">Capacity Driven</option>
+      <option value="customer_request">Customer Request</option>
+      <option value="other">Other</option>
+    </select>
+    <div id="override-fields" style="display:none;">
+      <label>Override Comment</label>
+      <textarea id="modal-override-comment" placeholder="Explain why the recommendation was overridden..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-success" id="modal-submit-btn" onclick="submitApproval()">Approve</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let currentSection = 'dashboard';
+let currentOrderId = null;
+let currentMoreTab = 'constraints';
+let pendingApproval = { orderId: null, rank: null, override: false };
+
+const demoUsers = [
+  { id: 'USR-001', name: 'James Carter', role: 'Ops / Logistics Planner' },
+  { id: 'USR-002', name: 'Maria Santos', role: 'Ops / Logistics Planner' },
+  { id: 'USR-003', name: 'Robert Kim', role: 'Finance Reviewer' },
+  { id: 'USR-004', name: 'Patricia Allen', role: 'Business Owner' },
+];
+let currentUser = demoUsers[0];
+
+// ── User Dropdown ────────────────────────────────────────────────────────────
+document.getElementById('user-pill').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('user-dropdown').classList.toggle('hidden');
+});
+document.addEventListener('click', () => document.getElementById('user-dropdown').classList.add('hidden'));
+
+document.querySelectorAll('.dropdown-item').forEach(el => {
+  el.addEventListener('click', () => {
+    const u = demoUsers.find(u => u.id === el.dataset.uid);
+    if (u) {
+      currentUser = u;
+      document.getElementById('current-user-name').textContent = u.name;
+      document.getElementById('user-avatar').textContent = u.name.split(' ').map(n => n[0]).join('');
+      document.getElementById('user-dropdown').classList.add('hidden');
+      document.getElementById('modal-approver').value = u.name;
+      // set role in approval modal
+      const roleSelect = document.getElementById('modal-role');
+      for (const opt of roleSelect.options) { if (opt.text === u.role) { roleSelect.value = opt.value; break; } }
+    }
+  });
+});
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = n => n != null ? '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '\u2014';
+const fmtShort = n => {
+  if (n == null) return '\u2014';
+  if (Math.abs(n) >= 1000) return '$' + (n/1000).toFixed(1) + 'k';
+  return '$' + n.toFixed(0);
+};
+const pct = n => n != null ? n.toFixed(1) + '%' : '\u2014';
+
+function badge(status) {
+  const labels = { ready:'Ready', enriched:'Enriched', evaluated:'Evaluated', approved:'Approved',
+    overridden:'Overridden', shipped:'Shipped', closed:'Closed', green:'Fresh', amber:'Aging', red:'Stale',
+    open:'Open', resolved:'Resolved', backlog:'Backlog', pending:'Pending', validated:'Validated', disputed:'Disputed',
+    standard:'Standard', finance_review:'Finance Review' };
+  return `<span class="badge badge-${status}">${labels[status] || status}</span>`;
+}
+
+function icon(name) { return `<span class="material-icons-round" style="font-size:16px;vertical-align:middle">${name}</span>`; }
+
+// ── Drawer ────────────────────────────────────────────────────────────────────
+function toggleDrawer() {
+  $('side-drawer').classList.toggle('open');
+  $('drawer-overlay').classList.toggle('hidden');
+}
+$('menu-toggle').addEventListener('click', toggleDrawer);
+$('drawer-close').addEventListener('click', toggleDrawer);
+$('drawer-overlay').addEventListener('click', toggleDrawer);
+
+document.querySelectorAll('.drawer-nav li').forEach(li => {
+  li.addEventListener('click', () => { switchSection(li.dataset.section); toggleDrawer(); });
+});
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.bottomnav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    switchSection(a.dataset.section);
+  });
+});
+
+function switchSection(sec) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  $(sec).classList.add('active');
+  document.querySelectorAll('.bottomnav a').forEach(a => a.classList.toggle('active', a.dataset.section === sec));
+  document.querySelectorAll('.drawer-nav li').forEach(li => li.classList.toggle('active', li.dataset.section === sec));
+  currentSection = sec;
+  if (sec === 'dashboard') loadDashboard();
+  if (sec === 'orders') loadOrders();
+  if (sec === 'decisions') loadDecisions();
+  if (sec === 'savings') loadSavings();
+  if (sec === 'more') loadMoreTab(currentMoreTab);
+}
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const [dash, issues] = await Promise.all([
+    fetch('/api/dashboard').then(r => r.json()),
+    fetch('/api/issues').then(r => r.json()),
+  ]);
+
+  $('dash-stats').innerHTML = `
+    <div class="kpi kpi-accent"><div class="kpi-label">Pilot Orders</div><div class="kpi-value">${dash.total_orders}</div><div class="kpi-sub">${dash.evaluated} evaluated</div></div>
+    <div class="kpi kpi-green"><div class="kpi-label">Theoretical Savings</div><div class="kpi-value">${fmtShort(dash.theoretical_savings)}</div><div class="kpi-sub">${dash.approved} orders approved</div></div>
+    <div class="kpi kpi-green"><div class="kpi-label">Realized Savings</div><div class="kpi-value">${fmtShort(dash.realized_savings)}</div><div class="kpi-sub">${dash.validated_count} finance-validated</div></div>
+    <div class="kpi kpi-sky"><div class="kpi-label">Acceptance Rate</div><div class="kpi-value">${pct(dash.acceptance_rate)}</div><div class="kpi-sub">${dash.weekly_active_users} weekly active users</div></div>
+  `;
+
+  $('dash-metrics-table').querySelector('tbody').innerHTML = `
+    <tr><td>Overrides</td><td><b>${dash.overridden}</b> <span class="text-xs text-muted">(${pct(dash.override_rate)})</span></td></tr>
+    <tr><td>Freshness SLA Compliance</td><td><b>${pct(dash.freshness_compliance)}</b></td></tr>
+    <tr><td>Weekly Active Users</td><td><b>${dash.weekly_active_users}</b></td></tr>
+    <tr><td>Finance-Validated Orders</td><td><b>${dash.validated_count}</b></td></tr>
+  `;
+
+  $('dash-issues-table').querySelector('tbody').innerHTML = issues.filter(i => i.status !== 'resolved').slice(0, 4).map(i => `
+    <tr><td style="max-width:200px;font-size:12px">${i.issue}</td><td class="text-sm">${i.owner}</td><td>${badge(i.status)}</td></tr>
+  `).join('') || '<tr><td colspan="3" class="table-empty">No open issues</td></tr>';
+}
+
+// ── Orders ───────────────────────────────────────────────────────────────────
+async function loadOrders() {
+  const orders = await fetch('/api/orders').then(r => r.json());
+  $('order-list').innerHTML = orders.map(o => `
+    <div class="order-card" onclick="openOrder('${o.id}')">
+      <div class="order-card-left">
+        <div class="order-card-id">${o.id}</div>
+        <div class="order-card-customer">${o.customer} ${icon('arrow_forward')} ${o.ship_to}</div>
+        <div class="order-card-meta">
+          <span>${icon('event')} Ship ${o.requested_ship_date}</span>
+          <span>${icon('warehouse')} ${o.baseline_source}</span>
+          ${o.total_qty ? `<span>${icon('inventory_2')} ${Math.round(o.total_qty)} gal</span>` : ''}
+        </div>
+      </div>
+      <div class="order-card-right">
+        ${badge(o.status)}
+        ${o.status === 'ready' ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); evaluateAndOpen('${o.id}', this)">${icon('play_arrow')} Evaluate</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function evaluateAndOpen(orderId, btn) {
+  if (btn) { btn.innerHTML = `${icon('hourglass_top')} Running...`; btn.disabled = true; }
+  await fetch(`/api/orders/${orderId}/evaluate`, { method: 'POST' });
+  openOrder(orderId);
+}
+
+// ── Order Detail ─────────────────────────────────────────────────────────────
+async function openOrder(orderId) {
+  currentOrderId = orderId;
+  switchSection('order-detail');
+  const data = await fetch(`/api/orders/${orderId}`).then(r => r.json());
+  const o = data.order;
+  const lines = data.lines;
+  const recs = data.recommendations;
+  const decision = data.decision;
+  const rules = data.customer_rules;
+
+  const steps = ['Intake', 'Enrich', 'Filter', 'Rank', 'Approve', 'Execute', 'Outcome'];
+  const statusMap = { ready: 0, enriched: 1, evaluated: 3, approved: 4, overridden: 4, shipped: 5, closed: 6 };
+  const currentStep = statusMap[o.status] ?? 0;
+
+  let html = `
+    <div class="page-top">
+      <div>
+        <h1 class="page-title">${o.id}</h1>
+        <p class="page-subtitle">${o.customer} &rarr; ${o.ship_to}</p>
+      </div>
+      <div>${badge(o.status)}</div>
+    </div>
+
+    <div class="stepper">
+      ${steps.map((s, i) => `
+        <div class="stepper-step ${i < currentStep ? 'done' : i === currentStep ? 'current' : ''}">
+          <div class="stepper-num">${i < currentStep ? '&#10003;' : i + 1}</div>
+          <span class="stepper-label">${s}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">${icon('description')} Order Details</span></div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">Customer</div><div class="info-value">${o.customer}</div></div>
+          <div class="info-item"><div class="info-label">Ship-To</div><div class="info-value">${o.ship_to}</div></div>
+          <div class="info-item"><div class="info-label">Order Date</div><div class="info-value">${o.order_date}</div></div>
+          <div class="info-item"><div class="info-label">Requested Ship</div><div class="info-value">${o.requested_ship_date}</div></div>
+          <div class="info-item"><div class="info-label">Baseline Source</div><div class="info-value">${o.baseline_source}</div></div>
+          <div class="info-item"><div class="info-label">Incoterm</div><div class="info-value">${o.incoterm}</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">${icon('gavel')} Customer Rules</span></div>
+        ${rules.length ? rules.map(r => `
+          <div class="rule-chip">
+            <div>
+              <div class="rule-chip-label">${r.rule_type.replace(/_/g, ' ')}</div>
+              <div class="rule-chip-value">${r.rule_value}</div>
+            </div>
+            ${r.hard_constraint ? badge('red') : badge('amber')}
+          </div>
+        `).join('') : '<p class="text-muted text-sm">No rules defined for this customer.</p>'}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">${icon('inventory_2')} Order Lines</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>SKU</th><th>Description</th><th>Qty</th><th>UOM</th><th>Pack</th></tr></thead>
+          <tbody>${lines.map(l => `<tr><td class="fw-700">${l.sku}</td><td>${l.description}</td><td>${l.quantity}</td><td>${l.uom}</td><td>${l.pack_type}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  if (recs.length > 0) {
+    html += `
+      <div class="page-top mt-16">
+        <div>
+          <h1 class="page-title" style="font-size:18px">Recommendations</h1>
+          <p class="page-subtitle">Ranked source options for this order</p>
+        </div>
+      </div>
+    `;
+
+    for (const r of recs) {
+      const isRank1 = r.option_rank === 1;
+      const deltaClass = r.delta_vs_baseline < 0 ? 'savings' : r.delta_vs_baseline > 0 ? 'extra' : '';
+      const codes = JSON.parse(r.reason_codes || '[]');
+
+      html += `
+        <div class="rec-card ${isRank1 ? 'rank-1' : ''}">
+          <div class="rec-top">
+            <div class="rec-top-left">
+              <div class="rec-badge-row">
+                <span class="rec-rank-badge">#${r.option_rank}${r.is_baseline ? ' Baseline' : isRank1 ? ' Best' : ''}</span>
+                ${badge(r.risk_flag)}
+                ${codes.includes('SIGNIFICANT_SAVINGS') ? `<span class="badge badge-green">${icon('trending_down')} Savings</span>` : ''}
+              </div>
+              <div class="rec-source-name">${r.source_name}</div>
+              <div class="rec-lane">${r.lane_description}</div>
+            </div>
+            <div class="rec-top-right">
+              <div class="rec-cost-big">${fmt(r.landed_cost)}</div>
+              <div class="rec-delta ${deltaClass}">
+                ${r.delta_vs_baseline < 0 ? icon('arrow_downward') : r.delta_vs_baseline > 0 ? icon('arrow_upward') : ''}
+                ${r.delta_vs_baseline < 0 ? '' : r.delta_vs_baseline > 0 ? '+' : ''}${fmt(r.delta_vs_baseline)} (${r.delta_pct > 0 ? '+' : ''}${pct(r.delta_pct)})
+              </div>
+            </div>
+          </div>
+          <div class="rec-body">
+            <div class="rec-meta-grid">
+              <div class="rec-meta-item"><div class="rec-meta-label">Source ID</div><div class="rec-meta-value">${r.source_id}</div></div>
+              <div class="rec-meta-item"><div class="rec-meta-label">Mode</div><div class="rec-meta-value">${r.mode}</div></div>
+              <div class="rec-meta-item"><div class="rec-meta-label">Ship Promise</div><div class="rec-meta-value">${r.ship_promise_date}</div></div>
+              <div class="rec-meta-item"><div class="rec-meta-label">Version</div><div class="rec-meta-value">${r.assumptions_version}</div></div>
+            </div>
+            <div class="rec-cost-grid">
+              <div class="rec-cost-chip"><span>Product</span><span>${fmt(r.product_cost)}</span></div>
+              <div class="rec-cost-chip"><span>Blending</span><span>${fmt(r.blending_cost)}</span></div>
+              <div class="rec-cost-chip"><span>Packaging</span><span>${fmt(r.packaging_cost)}</span></div>
+              <div class="rec-cost-chip"><span>Freight</span><span>${fmt(r.outbound_freight)}</span></div>
+              <div class="rec-cost-chip"><span>Accessorials</span><span>${fmt(r.accessorials)}</span></div>
+              <div class="rec-cost-chip"><span>FX Impact</span><span>${fmt(r.fx_impact)}</span></div>
+            </div>
+            <div class="rec-rationale">${r.rationale || 'Standard option within tolerance.'}</div>
+            ${!decision ? `
+              <div class="rec-actions">
+                <button class="btn btn-success btn-sm" style="flex:1" onclick="openApproval('${o.id}', ${r.option_rank}, false)">
+                  ${icon('check_circle')} Accept
+                </button>
+                ${!isRank1 ? `<button class="btn btn-warning btn-sm" style="flex:1" onclick="openApproval('${o.id}', ${r.option_rank}, true)">
+                  ${icon('swap_horiz')} Override
+                </button>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // Scenario panel
+    html += `
+      <div class="card mt-16">
+        <div class="card-header"><span class="card-title">${icon('tune')} Scenario Analysis</span></div>
+        <div class="scenario-row">
+          <div class="scenario-field"><label>Freight Shift %</label><input type="number" id="sc-freight" value="0" step="5"></div>
+          <div class="scenario-field"><label>FX Shift %</label><input type="number" id="sc-fx" value="0" step="5"></div>
+          <button class="btn btn-primary btn-sm" onclick="runScenario('${o.id}')" style="margin-bottom:1px">${icon('play_arrow')} Run</button>
+        </div>
+        <div id="scenario-results"></div>
+      </div>
+    `;
+  } else if (o.status === 'ready') {
+    html += `
+      <div class="empty-state">
+        <span class="material-icons-round">calculate</span>
+        <p>This order hasn't been evaluated yet.</p>
+        <button class="btn btn-primary" onclick="evaluateAndOpen('${o.id}')">
+          ${icon('play_arrow')} Run Landed Cost Evaluation
+        </button>
+      </div>
+    `;
+  }
+
+  if (decision) {
+    html += `
+      <div class="decision-card ${decision.override_flag ? 'overridden' : 'approved'}">
+        <div class="card-header"><span class="card-title">${icon(decision.override_flag ? 'swap_horiz' : 'verified')} ${decision.override_flag ? 'Override' : 'Approval'} Record</span></div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">Selected Option</div><div class="info-value">Rank #${decision.selected_option_rank}</div></div>
+          <div class="info-item"><div class="info-label">Approver</div><div class="info-value">${decision.approver}</div></div>
+          <div class="info-item"><div class="info-label">Role</div><div class="info-value">${decision.approver_role}</div></div>
+          <div class="info-item"><div class="info-label">Reason</div><div class="info-value">${decision.reason_code.replace(/_/g, ' ')}</div></div>
+          <div class="info-item"><div class="info-label">Threshold</div><div class="info-value">${badge(decision.threshold_class)}</div></div>
+          <div class="info-item"><div class="info-label">Timestamp</div><div class="info-value text-sm">${decision.approval_timestamp}</div></div>
+          ${decision.override_flag ? `<div class="info-item" style="grid-column:1/-1"><div class="info-label">Override Comment</div><div class="info-value">${decision.override_comment || '\u2014'}</div></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  $('order-detail-content').innerHTML = html;
+}
+
+// ── Approval Modal ───────────────────────────────────────────────────────────
+function openApproval(orderId, rank, isOverride) {
+  pendingApproval = { orderId, rank, override: isOverride };
+  $('modal-title').textContent = isOverride ? 'Override to Selected Option' : 'Approve Recommendation';
+  $('override-fields').style.display = isOverride ? 'block' : 'none';
+  $('modal-submit-btn').textContent = isOverride ? 'Submit Override' : 'Approve';
+  $('modal-submit-btn').className = isOverride ? 'btn btn-warning' : 'btn btn-success';
+  $('approve-modal').classList.add('show');
+}
+function closeModal() { $('approve-modal').classList.remove('show'); }
+
+async function submitApproval() {
+  const body = {
+    selected_rank: pendingApproval.rank,
+    approver: $('modal-approver').value,
+    role: $('modal-role').value,
+    override: pendingApproval.override,
+    override_comment: $('modal-override-comment').value,
+    reason_code: $('modal-reason').value,
+  };
+  $('modal-submit-btn').disabled = true;
+  $('modal-submit-btn').textContent = 'Saving...';
+  await fetch(`/api/orders/${pendingApproval.orderId}/approve`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+  });
+  $('modal-submit-btn').disabled = false;
+  closeModal();
+  openOrder(pendingApproval.orderId);
+}
+
+// Close modal on backdrop tap
+$('approve-modal').addEventListener('click', e => { if (e.target === $('approve-modal')) closeModal(); });
+
+// ── Scenario ─────────────────────────────────────────────────────────────────
+async function runScenario(orderId) {
+  const freight = parseFloat($('sc-freight').value) || 0;
+  const fx = parseFloat($('sc-fx').value) || 0;
+  const res = await fetch('/api/scenario', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ order_id: orderId, freight_shift_pct: freight, fx_shift_pct: fx }),
+  });
+  const data = await res.json();
+  $('scenario-results').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Source</th><th>Current</th><th>Scenario</th><th>Change</th></tr></thead>
+        <tbody>${data.map((s, i) => `
+          <tr>
+            <td class="fw-700">${i + 1}</td>
+            <td>${s.source_name}</td>
+            <td>${fmt(s.original_landed)}</td>
+            <td class="fw-700">${fmt(s.scenario_landed)}</td>
+            <td class="${s.change > 0 ? 'text-red' : 'text-green'} fw-700">${s.change > 0 ? '+' : ''}${fmt(s.change)}</td>
+          </tr>
+        `).join('')}</tbody>
+      </table>
+    </div>
+    <p class="text-xs text-muted" style="margin-top:8px">Scenario: Freight ${freight >= 0 ? '+' : ''}${freight}%, FX ${fx >= 0 ? '+' : ''}${fx}%</p>
+  `;
+}
+
+// ── Decisions ────────────────────────────────────────────────────────────────
+async function loadDecisions() {
+  const data = await fetch('/api/decisions').then(r => r.json());
+  if (!data.length) {
+    $('decision-list').innerHTML = '<div class="empty-state"><span class="material-icons-round">pending_actions</span><p>No decisions recorded yet. Evaluate and approve orders to see them here.</p></div>';
+    return;
+  }
+  $('decision-list').innerHTML = data.map(d => `
+    <div class="order-card" onclick="openOrder('${d.order_id}')">
+      <div class="order-card-left">
+        <div class="order-card-id">${d.order_id}</div>
+        <div class="order-card-customer">${d.customer} &rarr; ${d.ship_to}</div>
+        <div class="order-card-meta">
+          <span>${icon('person')} ${d.approver} (${d.approver_role})</span>
+          <span>${icon('schedule')} ${d.approval_timestamp}</span>
+        </div>
+      </div>
+      <div class="order-card-right">
+        ${d.override_flag ? badge('overridden') : badge('approved')}
+        ${d.delta_vs_baseline != null ? `<span class="${d.delta_vs_baseline < 0 ? 'text-green' : 'text-red'} fw-700 text-sm">${d.delta_vs_baseline < 0 ? '' : '+'}${fmt(d.delta_vs_baseline)}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Savings ──────────────────────────────────────────────────────────────────
+async function loadSavings() {
+  const data = await fetch('/api/savings').then(r => r.json());
+  if (!data.length) {
+    $('savings-list').innerHTML = '<div class="empty-state"><span class="material-icons-round">savings</span><p>No savings data yet.</p></div>';
+    return;
+  }
+  $('savings-list').innerHTML = data.map(s => `
+    <div class="savings-card">
+      <div class="savings-card-header">
+        <span class="savings-card-id">${s.order_id} <span class="text-muted text-sm">${s.customer}</span></span>
+        ${badge(s.finance_status)}
+      </div>
+      <div class="savings-grid">
+        <div class="savings-item"><div class="savings-item-label">Baseline</div><div class="savings-item-value">${fmt(s.baseline_cost)}</div></div>
+        <div class="savings-item"><div class="savings-item-label">Selected</div><div class="savings-item-value">${fmt(s.selected_cost)}</div></div>
+        <div class="savings-item"><div class="savings-item-label">Theoretical</div><div class="savings-item-value positive">${fmt(s.theoretical_savings)}</div></div>
+        <div class="savings-item"><div class="savings-item-label">Realized</div><div class="savings-item-value ${s.realized_savings != null ? 'positive' : ''}">${s.realized_savings != null ? fmt(s.realized_savings) : 'Pending'}</div></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── More Section ─────────────────────────────────────────────────────────────
+document.querySelectorAll('#more-tabs .pill-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#more-tabs .pill-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMoreTab = btn.dataset.more;
+    loadMoreTab(currentMoreTab);
+  });
+});
+
+async function loadMoreTab(tab) {
+  const el = $('more-content');
+
+  if (tab === 'constraints') {
+    const data = await fetch('/api/rules').then(r => r.json());
+    el.innerHTML = `<div class="card"><div class="card-header"><span class="card-title">${icon('gavel')} Constraint Catalog</span></div>
+      ${data.map(r => `
+        <div class="rule-chip">
+          <div>
+            <div class="rule-chip-label">${r.customer} &mdash; ${r.rule_type.replace(/_/g, ' ')}</div>
+            <div class="rule-chip-value">${r.rule_value}</div>
+          </div>
+          ${r.hard_constraint ? badge('red') : badge('amber')}
+        </div>
+      `).join('')}
+    </div>`;
+  }
+
+  if (tab === 'sources') {
+    const data = await fetch('/api/sources').then(r => r.json());
+    el.innerHTML = data.map(s => `
+      <div class="card">
+        <div class="flex-between mb-8">
+          <span class="fw-700">${s.source_name}</span>
+          ${badge(s.freshness_status)}
+        </div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">ID</div><div class="info-value">${s.source_id}</div></div>
+          <div class="info-item"><div class="info-label">Region</div><div class="info-value">${s.region}</div></div>
+          <div class="info-item"><div class="info-label">Production</div><div class="info-value">${fmt(s.production_cost)}/gal</div></div>
+          <div class="info-item"><div class="info-label">Blending</div><div class="info-value">${fmt(s.blending_cost)}/gal</div></div>
+          <div class="info-item"><div class="info-label">Packaging</div><div class="info-value">${fmt(s.packaging_cost)}/gal</div></div>
+          <div class="info-item"><div class="info-label">Capacity</div><div class="info-value">${s.capacity_available.toLocaleString()} gal</div></div>
+          <div class="info-item"><div class="info-label">Lead Time</div><div class="info-value">${s.lead_time_days} days</div></div>
+          <div class="info-item"><div class="info-label">Last Updated</div><div class="info-value">${s.freshness_date}</div></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (tab === 'rates') {
+    const data = await fetch('/api/rates').then(r => r.json());
+    el.innerHTML = `<div class="card" style="padding:0"><div class="table-wrap">
+      <table>
+        <thead><tr><th>Origin</th><th>Destination</th><th>Carrier</th><th>Mode</th><th>Rate</th><th>Acc.</th><th>Eff.</th><th>Exp.</th></tr></thead>
+        <tbody>${data.map(r => `
+          <tr>
+            <td class="text-sm">${r.origin}</td><td class="text-sm">${r.destination_zone}</td><td class="text-sm">${r.carrier}</td>
+            <td>${badge(r.mode === 'TL' ? 'green' : 'amber')}</td>
+            <td class="fw-700">${fmt(r.base_rate)}</td><td>${fmt(r.accessorial)}</td>
+            <td class="text-xs">${r.effective_date}</td><td class="text-xs">${r.expiry_date}</td>
+          </tr>
+        `).join('')}</tbody>
+      </table>
+    </div></div>`;
+  }
+
+  if (tab === 'fx') {
+    const data = await fetch('/api/fx').then(r => r.json());
+    el.innerHTML = data.map(f => `
+      <div class="card">
+        <div class="flex-between">
+          <div>
+            <div class="fw-700" style="font-size:16px">${f.from_currency} &rarr; ${f.to_currency}</div>
+            <div class="text-sm text-muted">Source: ${f.source} | Date: ${f.rate_date}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:22px; font-weight:800">${f.rate}</div>
+            ${badge(f.freshness_status)}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (tab === 'issues') {
+    const data = await fetch('/api/issues').then(r => r.json());
+    el.innerHTML = data.map(i => `
+      <div class="order-card" style="cursor:default">
+        <div class="order-card-left">
+          <div class="order-card-id">${i.category}</div>
+          <div class="order-card-customer">${i.issue}</div>
+          <div class="order-card-meta">
+            <span>${icon('person')} ${i.owner}</span>
+            <span>${icon('event')} Target: ${i.target_date}</span>
+          </div>
+        </div>
+        <div class="order-card-right">
+          ${badge(i.status)}
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>

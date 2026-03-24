@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>WSI Field Service</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header id="top-bar">
+    <div class="top-bar-left">
+      <button class="icon-btn" id="menu-toggle" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a class="brand" href="#" id="brand-home">
+        <div class="brand-icon"><i class="fas fa-droplet"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">WSI</span>
+          <span class="brand-sub">Field Service</span>
+        </div>
+      </a>
+    </div>
+    <div class="top-bar-right">
+      <div class="user-pill" id="user-pill">
+        <div class="avatar" id="user-avatar">JC</div>
+        <span id="current-user-name">James Carter</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- User dropdown -->
+  <div id="user-dropdown" class="dropdown hidden">
+    <div class="dropdown-label">Switch Demo Role</div>
+    <div class="dropdown-item" data-uid="USR-001"><div class="avatar-sm">JC</div><div><strong>James Carter</strong><span class="role-tag tech">Technician</span></div></div>
+    <div class="dropdown-item" data-uid="USR-002"><div class="avatar-sm">MS</div><div><strong>Maria Santos</strong><span class="role-tag tech">Technician</span></div></div>
+    <div class="dropdown-item" data-uid="USR-003"><div class="avatar-sm">RK</div><div><strong>Robert Kim</strong><span class="role-tag rev">Reviewer</span></div></div>
+    <div class="dropdown-item" data-uid="USR-004"><div class="avatar-sm">PA</div><div><strong>Patricia Allen</strong><span class="role-tag admin">Admin</span></div></div>
+  </div>
+
+  <!-- Side Drawer (tablet) -->
+  <div id="drawer-overlay" class="drawer-overlay hidden"></div>
+  <nav id="side-drawer" class="side-drawer">
+    <div class="drawer-header">
+      <div class="brand">
+        <div class="brand-icon"><i class="fas fa-droplet"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">WSI</span>
+          <span class="brand-sub">Field Service Platform</span>
+        </div>
+      </div>
+      <button class="icon-btn" id="drawer-close"><i class="fas fa-times"></i></button>
+    </div>
+    <ul class="drawer-nav">
+      <li class="active" data-page="dashboard"><span class="material-icons-round">space_dashboard</span><span>Dashboard</span></li>
+      <li data-page="visits"><i class="fas fa-clipboard-list"></i><span>Visits</span></li>
+      <li data-page="new-visit"><i class="fas fa-plus-circle"></i><span>New Visit</span></li>
+      <li data-page="action-items"><i class="fas fa-tasks"></i><span>Action Items</span></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="main-content">
+
+    <!-- ═══ Dashboard ═══ -->
+    <section id="page-dashboard" class="page active">
+      <div class="page-top">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle" id="dash-date"></p>
+        </div>
+      </div>
+      <div class="kpi-row" id="stats-grid"></div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-header">
+            <h2><i class="fas fa-clock-rotate-left"></i> Recent Visits</h2>
+          </div>
+          <div class="panel-body" id="recent-visits-list"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <h2><i class="fas fa-triangle-exclamation"></i> Priority Actions</h2>
+          </div>
+          <div class="panel-body" id="dashboard-actions-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ Visits List ═══ -->
+    <section id="page-visits" class="page">
+      <div class="page-top">
+        <div>
+          <h1 class="page-title">Visits</h1>
+          <p class="page-subtitle">All service visits</p>
+        </div>
+        <button class="btn btn-accent" onclick="showPage('new-visit')"><i class="fas fa-plus"></i> New Visit</button>
+      </div>
+      <div class="filter-chips">
+        <button class="chip active" data-filter-status="" onclick="filterVisits(this)">All</button>
+        <button class="chip" data-filter-status="planned" onclick="filterVisits(this)">Planned</button>
+        <button class="chip" data-filter-status="in_progress" onclick="filterVisits(this)">In Progress</button>
+        <button class="chip" data-filter-status="in_review" onclick="filterVisits(this)">In Review</button>
+        <button class="chip" data-filter-status="approved" onclick="filterVisits(this)">Approved</button>
+        <button class="chip" data-filter-status="published" onclick="filterVisits(this)">Published</button>
+      </div>
+      <div id="visits-list-container"></div>
+    </section>
+
+    <!-- ═══ New Visit ═══ -->
+    <section id="page-new-visit" class="page">
+      <div class="page-top">
+        <div>
+          <h1 class="page-title">New Visit</h1>
+          <p class="page-subtitle">Create a service visit</p>
+        </div>
+      </div>
+      <div class="panel" style="max-width:640px">
+        <div class="panel-body">
+          <form id="new-visit-form">
+            <div class="field">
+              <label>Site / Account</label>
+              <select id="nv-site" required></select>
+            </div>
+            <div class="field">
+              <label>Consultant</label>
+              <select id="nv-consultant" required></select>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Visit Date</label>
+                <input type="date" id="nv-date" required>
+              </div>
+              <div class="field">
+                <label>Report Pack</label>
+                <select id="nv-pack" required>
+                  <option value="WF">Wash Floor Review</option>
+                  <option value="WW">Wastewater Review</option>
+                  <option value="WF+WW">Combined WF + WW</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-accent btn-full"><i class="fas fa-rocket"></i> Create Visit</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ Action Items ═══ -->
+    <section id="page-action-items" class="page">
+      <div class="page-top">
+        <div>
+          <h1 class="page-title">Action Items</h1>
+          <p class="page-subtitle">All open and closed items</p>
+        </div>
+      </div>
+      <div id="all-actions-list"></div>
+    </section>
+
+    <!-- ═══ Visit Detail ═══ -->
+    <section id="page-visit-detail" class="page">
+      <div class="page-top">
+        <div>
+          <button class="btn-back" onclick="showPage('visits')"><i class="fas fa-arrow-left"></i> Back</button>
+          <h1 class="page-title" id="visit-detail-title"></h1>
+          <p class="page-subtitle" id="visit-detail-sub"></p>
+        </div>
+        <div class="header-actions" id="visit-header-actions"></div>
+      </div>
+      <div id="visit-detail-content"></div>
+    </section>
+  </main>
+
+  <!-- Bottom Nav (tablet/mobile) -->
+  <nav id="bottom-nav">
+    <button class="bnav-item active" data-page="dashboard"><span class="material-icons-round">space_dashboard</span><span>Dashboard</span></button>
+    <button class="bnav-item" data-page="visits"><i class="fas fa-clipboard-list"></i><span>Visits</span></button>
+    <button class="bnav-item" data-page="new-visit"><i class="fas fa-plus-circle"></i><span>New</span></button>
+    <button class="bnav-item" data-page="action-items"><i class="fas fa-tasks"></i><span>Actions</span></button>
+  </nav>
+
+  <!-- Modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal" id="modal-content"></div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
