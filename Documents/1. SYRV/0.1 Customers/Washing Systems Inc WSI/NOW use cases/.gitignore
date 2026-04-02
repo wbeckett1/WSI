@@ -1,0 +1,25 @@
+# Build outputs
+bin/
+obj/
+packages/
+.vs/
+
+# User-specific files
+*.user
+*.suo
+
+# Database files
+*.mdf
+*.ldf
+*.db
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Uploads (runtime content)
+WSIFieldService/WSIFieldService/Uploads/*
+!WSIFieldService/WSIFieldService/Uploads/.gitkeep
+
+# Claude config
+.claude/
